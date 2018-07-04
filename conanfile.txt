@@ -1,0 +1,7 @@
+[requires]
+#boost/1.66.0@conan/stable
+
+[generators]
+visual_studio
+cmake
+
