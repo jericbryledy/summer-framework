@@ -7,6 +7,7 @@
 #include <vector>
 #include <functional>
 #include <memory>
+#include <list>
 
 namespace summer {
 
@@ -29,19 +30,40 @@ namespace summer {
 		}
 
 		template<typename T, typename ... Params>
-		T* registerSingleton(SingletonIdentifier<T> singIden, Params ... params) noexcept {
-			if (prerequisitesReady(params...)) {
-				std::cout << "ready!" << std::endl;
-			} else {
-				std::cout << "not ready!" << std::endl;
+		void registerSingleton(SingletonIdentifier<T> singIden, Params ... params) noexcept {
+			singletonInstancers.emplace_back([=]() {
+				if (!prerequisitesReady(params...)) {
+					return false;
+				}
+
+				singletons[singIden.name] = std::make_unique<T>(getParam(params)...);
+
+				return true;
+			});
+		}
+
+		bool instantiateSingletons() {
+			auto progress = true;
+
+			while (progress) {
+				progress = false;
+
+				for (auto iter = begin(singletonInstancers); iter != end(singletonInstancers); ) {
+					if ((*iter)()) {
+						iter = singletonInstancers.erase(iter);
+						progress = true;
+					} else {
+						++iter;
+					}
+				}
 			}
 
-			singletons[singIden.name] = std::make_unique<T>(getParam(params)...);
-			return getSingleton(singIden);
+			return !singletonInstancers.size();
 		}
 
 	private:
 		std::unordered_map<std::string, std::unique_ptr<SingletonBase>> singletons;
+		std::list<std::function<bool()>> singletonInstancers;
 
 		template<typename T>
 		T getParam(T param) {
@@ -122,6 +144,7 @@ namespace summer {
 	private:
 		void initialize(int argc, char **argv) noexcept {
 			summerApp.setup(context);
+			context.instantiateSingletons();
 		}
 
 		ApplicationContext context;
