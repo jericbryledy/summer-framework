@@ -29,15 +29,15 @@ namespace summer {
 		}
 
 		template<typename T, typename ... SingIdens>
-		T* registerSingleton(const std::string &name, SingIdens ... singIdens) noexcept {
+		T* registerSingleton(SingletonIdentifier<T> singIden, SingIdens ... singIdens) noexcept {
 			if (prerequisitesReady(singIdens...)) {
 				std::cout << "ready!" << std::endl;
 			} else {
 				std::cout << "not ready!" << std::endl;
 			}
 
-			singletons[name] = std::make_unique<T>(getSingleton<typename SingIdens::type>(singIdens.name)...);
-			return getSingleton<T>(name);
+			singletons[singIden.name] = std::make_unique<T>(getSingleton<typename SingIdens::type>(singIdens.name)...);
+			return getSingleton<T>(singIden.name);
 		}
 
 	private:

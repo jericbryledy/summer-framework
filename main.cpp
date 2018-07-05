@@ -19,8 +19,8 @@ public:
 		auto sampleConfig = summer::SingletonIdentifier<SampleConfig>{"sampleConfig"};
 		auto sampleSingleton = summer::SingletonIdentifier<SampleSingleton>{"sampleSingleton"};
 
-		context.registerSingleton<SampleConfig>("sampleConfig");
-		context.registerSingleton<SampleSingleton>("sampleSingleton", sampleConfig);
+		context.registerSingleton(sampleConfig);
+		context.registerSingleton(sampleSingleton, sampleConfig);
 	}
 };
 
