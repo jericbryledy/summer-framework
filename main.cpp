@@ -1,9 +1,12 @@
 #include "summer.h"
+#include <string>
 #include <iostream>
 
 class SampleConfig : public summer::SingletonBase {
 public:
-	SampleConfig() {}
+	SampleConfig(std::string path) {
+		std::cout << "load: " << path << std::endl;
+	}
 };
 
 class SampleSingleton : public summer::SingletonBase {
@@ -19,7 +22,7 @@ public:
 		auto sampleConfig = summer::SingletonIdentifier<SampleConfig>{"sampleConfig"};
 		auto sampleSingleton = summer::SingletonIdentifier<SampleSingleton>{"sampleSingleton"};
 
-		context.registerSingleton(sampleConfig);
+		context.registerSingleton(sampleConfig, "hello");
 		context.registerSingleton(sampleSingleton, sampleConfig);
 	}
 };

@@ -28,29 +28,44 @@ namespace summer {
 			return static_cast<T*>(singletons[singIden.name].get());
 		}
 
-		template<typename T, typename ... SingIdens>
-		T* registerSingleton(SingletonIdentifier<T> singIden, SingIdens ... singIdens) noexcept {
-			if (prerequisitesReady(singIdens...)) {
+		template<typename T, typename ... Params>
+		T* registerSingleton(SingletonIdentifier<T> singIden, Params ... params) noexcept {
+			if (prerequisitesReady(params...)) {
 				std::cout << "ready!" << std::endl;
 			} else {
 				std::cout << "not ready!" << std::endl;
 			}
 
-			singletons[singIden.name] = std::make_unique<T>(getSingleton(singIdens)...);
+			singletons[singIden.name] = std::make_unique<T>(getParam(params)...);
 			return getSingleton(singIden);
 		}
 
 	private:
 		std::unordered_map<std::string, std::unique_ptr<SingletonBase>> singletons;
 
+		template<typename T>
+		T getParam(T param) {
+			return param;
+		}
+
+		template<typename T>
+		T* getParam(SingletonIdentifier<T> singIden) {
+			return getSingleton(singIden);
+		}
+
 		bool prerequisitesReady() { return true; }
 
-		template<typename T, typename ... SingIdens>
-		bool prerequisitesReady(SingletonIdentifier<T> singIden, SingIdens ... singIdens) {
+		template<typename T, typename ... Params>
+		bool prerequisitesReady(T param, Params ... params) {
+			return prerequisitesReady(params...);
+		}
+
+		template<typename T, typename ... Params>
+		bool prerequisitesReady(SingletonIdentifier<T> singIden, Params ... params) {
 			auto ready = getSingleton(singIden) != nullptr;
 
 			if (ready) {
-				return prerequisitesReady(singIdens...);
+				return prerequisitesReady(params...);
 			}
 
 			return false;
