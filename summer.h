@@ -24,8 +24,8 @@ namespace summer {
 	class ApplicationContext {
 	public:
 		template<typename T>
-		T* getSingleton(const std::string &name) noexcept {
-			return static_cast<T*>(singletons[name].get());
+		T* getSingleton(SingletonIdentifier<T> singIden) noexcept {
+			return static_cast<T*>(singletons[singIden.name].get());
 		}
 
 		template<typename T, typename ... SingIdens>
@@ -36,8 +36,8 @@ namespace summer {
 				std::cout << "not ready!" << std::endl;
 			}
 
-			singletons[singIden.name] = std::make_unique<T>(getSingleton<typename SingIdens::type>(singIdens.name)...);
-			return getSingleton<T>(singIden.name);
+			singletons[singIden.name] = std::make_unique<T>(getSingleton(singIdens)...);
+			return getSingleton(singIden);
 		}
 
 	private:
@@ -47,7 +47,7 @@ namespace summer {
 
 		template<typename T, typename ... SingIdens>
 		bool prerequisitesReady(SingletonIdentifier<T> singIden, SingIdens ... singIdens) {
-			auto ready = getSingleton<T>(singIden.name) != nullptr;
+			auto ready = getSingleton(singIden) != nullptr;
 
 			if (ready) {
 				return prerequisitesReady(singIdens...);
