@@ -31,7 +31,7 @@ namespace summer {
 
 		template <typename T, typename ... Params>
 		void registerSingleton(SingletonIdentifier<T> singIden, Params ... params) noexcept {
-			singletonInstancers.emplace_back([=]() {
+			std::function<bool()> instantiator = [=]() {
 				if (!prerequisitesReady(params...)) {
 					return false;
 				}
@@ -39,7 +39,14 @@ namespace summer {
 				singletons[singIden.name] = std::make_unique<T>(getParam(params)...);
 
 				return true;
-			});
+			};
+
+			std::function<void()> errorLogger = [=]() {
+				std::cerr << "error instantiating " << singIden.name << std::endl;
+				printMissing(1, params...);
+			};
+
+			singletonInstancers[singIden.name] = std::make_pair(instantiator, errorLogger);
 		}
 
 		bool instantiateSingletons() noexcept {
@@ -49,7 +56,7 @@ namespace summer {
 				progress = false;
 
 				for (auto iter = std::begin(singletonInstancers); iter != std::end(singletonInstancers); ) {
-					if ((*iter)()) {
+					if (std::get<0>(iter->second)()) {
 						iter = singletonInstancers.erase(iter);
 						progress = true;
 					} else {
@@ -58,12 +65,19 @@ namespace summer {
 				}
 			}
 
+			for (auto iter = std::begin(singletonInstancers); iter != std::end(singletonInstancers); ++iter) {
+				std::function<void()> errorLogger;
+				std::tie(std::ignore, errorLogger) = iter->second;
+
+				errorLogger();
+			}
+
 			return !singletonInstancers.size();
 		}
 
 	private:
 		std::unordered_map<std::string, std::unique_ptr<SingletonBase>> singletons;
-		std::list<std::function<bool()>> singletonInstancers;
+		std::unordered_map<std::string, std::tuple<std::function<bool()>, std::function<void()>>> singletonInstancers;
 
 		template <typename T>
 		T getParam(T param) noexcept {
@@ -91,6 +105,22 @@ namespace summer {
 			}
 
 			return false;
+		}
+
+		void printMissing(int) noexcept {}
+
+		template <typename T, typename ... Params>
+		void printMissing(int index, T param, Params ... params) noexcept {
+			printMissing(index + 1, params...);
+		}
+
+		template <typename T, typename ... Params>
+		void printMissing(int index, SingletonIdentifier<T> singIden, Params ... params) noexcept {
+			if (getSingleton(singIden) == nullptr) {
+				std::cerr << "  - param " << index << ' ' << singIden.name << " missing" << std::endl;
+			}
+
+			printMissing(index + 1, params...);
 		}
 	};
 
