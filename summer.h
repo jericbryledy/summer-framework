@@ -18,6 +18,7 @@ namespace summer {
 
 	template <typename T>
 	struct SingletonIdentifier {
+		SingletonIdentifier() noexcept : name(typeid(T).name()) {}
 		SingletonIdentifier(std::string name) noexcept : name(name) {}
 		std::string name;
 		using type = T;
