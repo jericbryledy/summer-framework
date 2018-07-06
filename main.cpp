@@ -19,8 +19,8 @@ public:
 class SampleApplication : public summer::PrimarySource {
 public:
 	void setup(summer::ApplicationContext& context) noexcept {
-		auto sampleConfig = S<SampleConfig>{"sampleConfig"};
-		auto sampleSingleton = S<SampleSingleton>{"sampleSingleton"};
+		auto sampleConfig = S<SampleConfig>("sampleConfig");
+		auto sampleSingleton = S<SampleSingleton>("sampleSingleton");
 
 		context.registerSingleton(sampleConfig, "hello");
 		context.registerSingleton(sampleSingleton, sampleConfig);
