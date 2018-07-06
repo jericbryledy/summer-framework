@@ -19,12 +19,16 @@ public:
 class SampleApplication : public summer::PrimarySource {
 public:
 	void setup(summer::ApplicationContext& context) noexcept {
-		auto sampleConfig = summer::SingletonIdentifier<SampleConfig>{"sampleConfig"};
-		auto sampleSingleton = summer::SingletonIdentifier<SampleSingleton>{"sampleSingleton"};
+		auto sampleConfig = S<SampleConfig>{"sampleConfig"};
+		auto sampleSingleton = S<SampleSingleton>{"sampleSingleton"};
 
 		context.registerSingleton(sampleConfig, "hello");
 		context.registerSingleton(sampleSingleton, sampleConfig);
 	}
+
+private:
+	template <typename T>
+	using S = summer::SingletonIdentifier<T>;
 };
 
 int main(int argc, char* argv[]) {
