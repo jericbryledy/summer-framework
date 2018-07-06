@@ -13,7 +13,7 @@ namespace summer {
 
 	class SingletonBase {
 	public:
-		virtual ~SingletonBase() {}
+		virtual ~SingletonBase() noexcept {}
 	};
 
 	template <typename T>
@@ -24,12 +24,12 @@ namespace summer {
 
 	class ApplicationContext {
 	public:
-		template<typename T>
+		template <typename T>
 		T* getSingleton(SingletonIdentifier<T> singIden) noexcept {
 			return static_cast<T*>(singletons[singIden.name].get());
 		}
 
-		template<typename T, typename ... Params>
+		template <typename T, typename ... Params>
 		void registerSingleton(SingletonIdentifier<T> singIden, Params ... params) noexcept {
 			singletonInstancers.emplace_back([=]() {
 				if (!prerequisitesReady(params...)) {
@@ -42,7 +42,7 @@ namespace summer {
 			});
 		}
 
-		bool instantiateSingletons() {
+		bool instantiateSingletons() noexcept {
 			auto progress = true;
 
 			while (progress) {
@@ -65,25 +65,25 @@ namespace summer {
 		std::unordered_map<std::string, std::unique_ptr<SingletonBase>> singletons;
 		std::list<std::function<bool()>> singletonInstancers;
 
-		template<typename T>
-		T getParam(T param) {
+		template <typename T>
+		T getParam(T param) noexcept {
 			return param;
 		}
 
-		template<typename T>
-		T* getParam(SingletonIdentifier<T> singIden) {
+		template <typename T>
+		T* getParam(SingletonIdentifier<T> singIden) noexcept {
 			return getSingleton(singIden);
 		}
 
-		bool prerequisitesReady() { return true; }
+		bool prerequisitesReady() noexcept { return true; }
 
-		template<typename T, typename ... Params>
-		bool prerequisitesReady(T param, Params ... params) {
+		template <typename T, typename ... Params>
+		bool prerequisitesReady(T param, Params ... params) noexcept {
 			return prerequisitesReady(params...);
 		}
 
-		template<typename T, typename ... Params>
-		bool prerequisitesReady(SingletonIdentifier<T> singIden, Params ... params) {
+		template <typename T, typename ... Params>
+		bool prerequisitesReady(SingletonIdentifier<T> singIden, Params ... params) noexcept {
 			auto ready = getSingleton(singIden) != nullptr;
 
 			if (ready) {
@@ -129,7 +129,7 @@ namespace summer {
 		using handlerType = std::function<HttpResponse(HttpRequest &request)>;
 
 	public:
-		void registerHandler(Method method, handlerType func) {
+		void registerHandler(Method method, handlerType func) noexcept {
 			handlers.emplace_back(func);
 		}
 
@@ -137,7 +137,7 @@ namespace summer {
 		std::vector<handlerType> handlers;
 	};
 
-	template<typename T, typename std::enable_if_t<std::is_base_of_v<PrimarySource, T>>* = nullptr>
+	template <typename T, typename std::enable_if_t<std::is_base_of_v<PrimarySource, T>>* = nullptr>
 	class SummerApplication {
 	public:
 
