@@ -48,7 +48,7 @@ namespace summer {
 			while (progress) {
 				progress = false;
 
-				for (auto iter = begin(singletonInstancers); iter != end(singletonInstancers); ) {
+				for (auto iter = std::begin(singletonInstancers); iter != std::end(singletonInstancers); ) {
 					if ((*iter)()) {
 						iter = singletonInstancers.erase(iter);
 						progress = true;
