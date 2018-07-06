@@ -50,9 +50,7 @@ namespace summer {
 		}
 
 		bool instantiateSingletons() noexcept {
-			auto progress = true;
-
-			while (progress) {
+			for (auto progress = true; progress; ) {
 				progress = false;
 
 				for (auto iter = std::begin(singletonInstancers); iter != std::end(singletonInstancers); ) {
@@ -98,9 +96,7 @@ namespace summer {
 
 		template <typename T, typename ... Params>
 		bool prerequisitesReady(SingletonIdentifier<T> singIden, Params ... params) noexcept {
-			auto ready = getSingleton(singIden) != nullptr;
-
-			if (ready) {
+			if (getSingleton(singIden) != nullptr) {
 				return prerequisitesReady(params...);
 			}
 
