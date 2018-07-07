@@ -33,6 +33,12 @@ namespace summer {
 
 		template <typename T, typename ... Params>
 		void registerSingleton(SingletonIdentifier<T> singIden, Params ... params) noexcept {
+			if (singletonInstancers.find(singIden.name) != std::end(singletonInstancers)) {
+				std::cerr << "singleton [" << singIden.name << "] already registered" << std::endl;
+
+				return;
+			}
+
 			std::function<bool()> instantiator = [=]() {
 				if (!prerequisitesReady(params...)) {
 					return false;
@@ -44,7 +50,7 @@ namespace summer {
 			};
 
 			std::function<void()> errorLogger = [=]() {
-				std::cerr << "error instantiating " << singIden.name << std::endl;
+				std::cerr << "error instantiating [" << singIden.name << ']' << std::endl;
 				printMissing(1, params...);
 			};
 
@@ -115,7 +121,7 @@ namespace summer {
 		template <typename T, typename ... Params>
 		void printMissing(int index, SingletonIdentifier<T> singIden, Params ... params) noexcept {
 			if (getSingleton(singIden) == nullptr) {
-				std::cerr << "  - param " << index << ' ' << singIden.name << " missing" << std::endl;
+				std::cerr << "  - param " << index << " [" << singIden.name << "] missing" << std::endl;
 			}
 
 			printMissing(index + 1, params...);
