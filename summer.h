@@ -27,12 +27,12 @@ namespace summer {
 	class ApplicationContext {
 	public:
 		template <typename T>
-		T* getSingleton(SingletonIdentifier<T> singIden) noexcept {
+		T* getSingleton(const SingletonIdentifier<T>& singIden) noexcept {
 			return static_cast<T*>(singletons[singIden.name].get());
 		}
 
 		template <typename T, typename ... Params>
-		void registerSingleton(SingletonIdentifier<T> singIden, Params ... params) noexcept {
+		void registerSingleton(const SingletonIdentifier<T>& singIden, const Params& ... params) noexcept {
 			if (singletonInstancers.find(singIden.name) != std::end(singletonInstancers)) {
 				std::cerr << "singleton [" << singIden.name << "] already registered" << std::endl;
 
@@ -91,19 +91,19 @@ namespace summer {
 		}
 
 		template <typename T>
-		T* getParam(SingletonIdentifier<T> singIden) noexcept {
+		T* getParam(const SingletonIdentifier<T>& singIden) noexcept {
 			return getSingleton(singIden);
 		}
 
 		bool prerequisitesReady() noexcept { return true; }
 
 		template <typename T, typename ... Params>
-		bool prerequisitesReady(T param, Params ... params) noexcept {
+		bool prerequisitesReady(const T& param, const Params& ... params) noexcept {
 			return prerequisitesReady(params...);
 		}
 
 		template <typename T, typename ... Params>
-		bool prerequisitesReady(SingletonIdentifier<T> singIden, Params ... params) noexcept {
+		bool prerequisitesReady(const SingletonIdentifier<T>& singIden, const Params& ... params) noexcept {
 			if (getSingleton(singIden) != nullptr) {
 				return prerequisitesReady(params...);
 			}
@@ -114,12 +114,12 @@ namespace summer {
 		void printMissing(int) noexcept {}
 
 		template <typename T, typename ... Params>
-		void printMissing(int index, T param, Params ... params) noexcept {
+		void printMissing(int index, const T& param, const Params& ... params) noexcept {
 			printMissing(index + 1, params...);
 		}
 
 		template <typename T, typename ... Params>
-		void printMissing(int index, SingletonIdentifier<T> singIden, Params ... params) noexcept {
+		void printMissing(int index, const SingletonIdentifier<T>& singIden, const Params& ... params) noexcept {
 			if (getSingleton(singIden) == nullptr) {
 				std::cerr << "  - param " << index << " [" << singIden.name << "] missing" << std::endl;
 			}
@@ -130,7 +130,7 @@ namespace summer {
 
 	class PrimarySource {
 	public:
-		void setup(ApplicationContext& context) noexcept {
+		void setup(const ApplicationContext& context) noexcept {
 			std::cout << "default setup" << std::endl;
 		}
 	};

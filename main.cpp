@@ -1,4 +1,5 @@
 #include "summer.h"
+
 #include <string>
 #include <iostream>
 
