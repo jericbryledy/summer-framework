@@ -86,13 +86,13 @@ namespace summer {
 		std::unordered_map<std::string, std::tuple<std::function<bool()>, std::function<void()>>> singletonInstancers;
 
 		template <typename T>
-		T getParam(T param) noexcept {
+		T& getParam(T& param) noexcept {
 			return param;
 		}
 
 		template <typename T>
-		T* getParam(const SingletonIdentifier<T>& singIden) noexcept {
-			return getSingleton(singIden);
+		T& getParam(const SingletonIdentifier<T>& singIden) noexcept {
+			return *getSingleton(singIden);
 		}
 
 		bool prerequisitesReady() noexcept { return true; }

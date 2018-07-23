@@ -5,15 +5,21 @@
 
 class SampleConfig : public summer::SingletonBase {
 public:
-	SampleConfig(std::string path) {
+	SampleConfig(std::string path) : path(path) {
 		std::cout << "load: " << path << std::endl;
 	}
+
+	const std::string& getPath() {
+		return path;
+	}
+private:
+	std::string path;
 };
 
 class SampleSingleton : public summer::SingletonBase {
 public:
-	SampleSingleton(SampleConfig* config) {
-		std::cout << "config address: " << config << std::endl;
+	SampleSingleton(SampleConfig& config) {
+		std::cout << "sample singleton path: " << config.getPath() << std::endl;
 	}
 };
 
@@ -21,10 +27,9 @@ class SampleApplication : public summer::PrimarySource {
 public:
 	void setup(summer::ApplicationContext& context) noexcept {
 		auto sampleConfig = S<SampleConfig>();
-		auto sampleSingleton = S<SampleSingleton>();
 
 		context.registerSingleton(sampleConfig, "hello");
-		context.registerSingleton(sampleSingleton, sampleConfig);
+		context.registerSingleton(S<SampleSingleton>(), sampleConfig);
 	}
 
 private:
