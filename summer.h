@@ -17,28 +17,36 @@ namespace summer {
 	};
 
 	template <typename T>
-	struct SingletonIdentifier {
+	class SingletonIdentifier {
+	public:
 		SingletonIdentifier() noexcept : SingletonIdentifier(typeid(T).name()) {}
 
 		SingletonIdentifier(const char* name) noexcept : name(name) {}
 		SingletonIdentifier(const std::string& name) noexcept : name(name) {}
 		SingletonIdentifier(const std::string&& name) noexcept : name(std::move(name)) {}
 
-		std::string name;
+		const std::string& getName() const noexcept {
+			return name;
+		}
+
+	public:
 		using type = T;
+
+	private:
+		std::string name;
 	};
 
 	class ApplicationContext {
 	public:
 		template <typename T>
 		T* getSingleton(const SingletonIdentifier<T>& singIden) noexcept {
-			return static_cast<T*>(singletons[singIden.name].get());
+			return static_cast<T*>(singletons[singIden.getName()].get());
 		}
 
 		template <typename T, typename ... Params>
 		void registerSingleton(const SingletonIdentifier<T>& singIden, const Params& ... params) noexcept {
-			if (singletonInstancers.find(singIden.name) != std::end(singletonInstancers)) {
-				std::cerr << "singleton [" << singIden.name << "] already registered" << std::endl;
+			if (singletonInstancers.find(singIden.getName()) != std::end(singletonInstancers)) {
+				std::cerr << "singleton [" << singIden.getName() << "] already registered" << std::endl;
 
 				return;
 			}
@@ -48,17 +56,17 @@ namespace summer {
 					return false;
 				}
 
-				singletons[singIden.name] = std::make_unique<T>(getParam(params)...);
+				singletons[singIden.getName()] = std::make_unique<T>(getParam(params)...);
 
 				return true;
 			};
 
 			std::function<void()> errorLogger = [=]() {
-				std::cerr << "error instantiating [" << singIden.name << ']' << std::endl;
+				std::cerr << "error instantiating [" << singIden.getName() << ']' << std::endl;
 				printMissing(1, params...);
 			};
 
-			singletonInstancers[singIden.name] = std::make_pair(instantiator, errorLogger);
+			singletonInstancers[singIden.getName()] = std::make_pair(instantiator, errorLogger);
 		}
 
 		bool instantiateSingletons() noexcept {
@@ -125,7 +133,7 @@ namespace summer {
 		template <typename T, typename ... Params>
 		void printMissing(int index, const SingletonIdentifier<T>& singIden, const Params& ... params) noexcept {
 			if (getSingleton(singIden) == nullptr) {
-				std::cerr << "  - param " << index << " [" << singIden.name << "] missing" << std::endl;
+				std::cerr << "  - param " << index << " [" << singIden.getName() << "] missing" << std::endl;
 			}
 
 			printMissing(index + 1, params...);
