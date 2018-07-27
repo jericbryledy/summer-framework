@@ -18,8 +18,12 @@ namespace summer {
 
 	template <typename T>
 	struct SingletonIdentifier {
-		SingletonIdentifier() noexcept : name(typeid(T).name()) {}
-		SingletonIdentifier(std::string name) noexcept : name(name) {}
+		SingletonIdentifier() noexcept : SingletonIdentifier(typeid(T).name()) {}
+
+		SingletonIdentifier(const char* name) noexcept : name(name) {}
+		SingletonIdentifier(const std::string& name) noexcept : name(name) {}
+		SingletonIdentifier(const std::string&& name) noexcept : name(std::move(name)) {}
+
 		std::string name;
 		using type = T;
 	};
