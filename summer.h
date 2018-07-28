@@ -83,9 +83,8 @@ namespace summer {
 				}
 			}
 
-			for (auto iter = std::begin(singletonInstancers); iter != std::end(singletonInstancers); ++iter) {
-				std::function<void()> errorLogger;
-				std::tie(std::ignore, errorLogger) = iter->second;
+			for (auto[name, instantiatorPair] : singletonInstancers) {
+				auto[instantiator, errorLogger] = instantiatorPair;
 
 				errorLogger();
 			}
