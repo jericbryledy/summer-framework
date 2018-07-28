@@ -23,7 +23,7 @@ namespace summer {
 
 		SingletonIdentifier(const char* name) noexcept : name(name) {}
 		SingletonIdentifier(const std::string& name) noexcept : name(name) {}
-		SingletonIdentifier(const std::string&& name) noexcept : name(std::move(name)) {}
+		SingletonIdentifier(std::string&& name) noexcept : name(std::move(name)) {}
 
 		const std::string& getName() const noexcept {
 			return name;
