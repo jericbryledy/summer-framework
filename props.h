@@ -41,6 +41,10 @@ namespace summer::util {
 				while (!file.eof()) {
 					std::getline(file, line);
 
+					if (auto c = line[0]; c == '#' || c == '!') {
+						continue;
+					}
+
 					if (auto splitIndex = line.find('='); splitIndex != std::string::npos) {
 						auto key = line.substr(0, splitIndex);
 						auto value = line.substr(splitIndex + 1);
