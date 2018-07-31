@@ -56,7 +56,7 @@ namespace summer {
 					return false;
 				}
 
-				singletons[singIden.getName()] = std::make_unique<T>(getParam(params)...);
+				singletons.emplace(singIden.getName(), std::make_unique<T>(getParam(params)...));
 
 				return true;
 			};

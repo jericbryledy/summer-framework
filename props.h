@@ -49,7 +49,7 @@ namespace summer::util {
 						auto key = line.substr(0, splitIndex);
 						auto value = line.substr(splitIndex + 1);
 
-						values[std::move(key)] = std::move(value);
+						values.emplace(std::move(key), std::move(value));
 					}
 				}
 
