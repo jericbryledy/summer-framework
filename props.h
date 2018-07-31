@@ -60,11 +60,30 @@ namespace summer::util {
 		}
 
 		template <typename T>
-		const PropertyValue& operator[] (T&& key) noexcept {
-			return values[std::forward<T>(key)];
+		const PropertyValue& operator[] (T&& key) const noexcept {
+			return getProperty(std::forward<T>(key));
 		}
 
-	public:
+		template <typename T>
+		const PropertyValue& getProperty(T&& key) const noexcept {
+			if (auto res = values.find(std::forward<T>(key)); res != values.end()) {
+				return res->second;
+			}
+
+			return {};
+		}
+
+		template <typename T, typename U, typename V = std::conditional_t<std::is_convertible_v<U, std::string>, std::string, U>>
+		V getProperty(T&& key, U defaultValue) const noexcept {
+			if (auto res = values.find(std::forward<T>(key)); res != values.end()) {
+				return res->second;
+			}
+
+			return defaultValue;
+		}
+
+
+	private:
 		std::unordered_map<std::string, PropertyValue> values;
 	};
 
