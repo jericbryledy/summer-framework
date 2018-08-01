@@ -11,9 +11,13 @@
 
 namespace summer {
 
+	class ApplicationContext;
+
 	class SingletonBase {
 	public:
 		virtual ~SingletonBase() noexcept {}
+
+		virtual void postConstruct(ApplicationContext& context) noexcept {}
 	};
 
 	template <typename T>
@@ -90,6 +94,12 @@ namespace summer {
 			}
 
 			return !singletonInstancers.size();
+		}
+
+		void doPostConstructs() noexcept {
+			for (auto it = std::begin(singletons); it != std::end(singletons); ++it) {
+				it->second->postConstruct(*this);
+			}
 		}
 
 	private:
@@ -190,6 +200,7 @@ namespace summer {
 		void initialize(int argc, char **argv) noexcept {
 			summerApp.setup(context);
 			context.instantiateSingletons();
+			context.doPostConstructs();
 		}
 
 		ApplicationContext context;

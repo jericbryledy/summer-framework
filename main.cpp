@@ -1,4 +1,6 @@
 #include "summer.h"
+#include "props.h"
+#include "conversions.h"
 
 #include <string>
 #include <iostream>
@@ -21,6 +23,15 @@ public:
 	SampleSingleton(SampleConfig& config) {
 		std::cout << "sample singleton path: " << config.getPath() << std::endl;
 	}
+
+	void postConstruct(summer::ApplicationContext& context) noexcept override {
+		config = context.getSingleton(summer::SingletonIdentifier<SampleConfig>());
+
+		std::cout << "i got: " << config << std::endl;
+	}
+
+private:
+	SampleConfig * config;
 };
 
 class SampleApplication : public summer::PrimarySource {
