@@ -156,42 +156,6 @@ namespace summer {
 		}
 	};
 
-	enum class Method {
-		POST, GET, PUT, PATCH, DELETE
-	};
-
-	class HttpRequest {
-	public:
-		Method getMethod() const noexcept {
-			return method;
-		}
-
-		std::string getPath() const noexcept {
-			return path;
-		}
-
-	private:
-		Method method;
-		std::string path;
-	};
-
-	class HttpResponse {
-
-	};
-
-	class Controller {
-	private:
-		using handlerType = std::function<HttpResponse(HttpRequest &request)>;
-
-	public:
-		void registerHandler(Method method, handlerType func) noexcept {
-			handlers.emplace_back(func);
-		}
-
-	private:
-		std::vector<handlerType> handlers;
-	};
-
 	template <typename T, typename std::enable_if_t<std::is_base_of_v<PrimarySource, T>>* = nullptr>
 	class SummerApplication {
 	public:
