@@ -5,6 +5,27 @@
 #include <string>
 #include <iostream>
 
+class ModuleA {
+public:
+	void initialize(std::vector<std::string>& args) {
+		std::cout << "module a initialize!" << std::endl;
+	}
+};
+
+class ModuleB {
+public:
+	void initialize(std::vector<std::string>& args) {
+		std::cout << "module b initialize!" << std::endl;
+	}
+};
+
+class ModuleC {
+public:
+	void initialize(std::vector<std::string>& args) {
+		std::cout << "module c initialize!" << std::endl;
+	}
+};
+
 class SampleConfig : public summer::SingletonBase {
 public:
 	SampleConfig(std::string path) : path(path) {
@@ -49,7 +70,7 @@ private:
 };
 
 int main(int argc, char* argv[]) {
-	summer::SummerApplication<SampleApplication>::run(argc, argv);
+	summer::SummerApplication<SampleApplication, summer::ModulePack<ModuleA, ModuleB, ModuleC>>::run(argc, argv);
 
 	return 0;
 }

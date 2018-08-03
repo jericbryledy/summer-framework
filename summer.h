@@ -156,26 +156,41 @@ namespace summer {
 		}
 	};
 
-	template <typename T, typename std::enable_if_t<std::is_base_of_v<PrimarySource, T>>* = nullptr>
+	template <typename ... Modules>
+	using ModulePack = std::tuple<Modules...>;
+
+	template <typename T, typename ModulePackType = ModulePack<>, typename std::enable_if_t<std::is_base_of_v<PrimarySource, T>>* = nullptr>
 	class SummerApplication {
 	public:
+		static void run(int argc, char* argv[]) noexcept {
+			SummerApplication<T, ModulePackType> summerApp;
+
+			auto args = std::vector<std::string>(argc);
+			for (int i = 0; i < argc; ++i) {
+				args.emplace_back(argv[i]);
+			}
+
+			summerApp.initialize(args);
+		}
 
 	private:
-		void initialize(int argc, char **argv) noexcept {
+		void initialize(std::vector<std::string>& args) noexcept {
+			initializeModules(args);
+
 			summerApp.setup(context);
 			context.instantiateSingletons();
 			context.doPostConstructs();
 		}
 
+		void initializeModules(std::vector<std::string>& args) noexcept {
+			std::apply([&args](auto&... module) {
+				(module.initialize(args), ...);
+			}, modules);
+		}
+
 		ApplicationContext context;
 		T summerApp;
-
-	public:
-		static void run(int argc, char **argv) noexcept {
-			SummerApplication<T> summerApp;
-
-			summerApp.initialize(argc, argv);
-		}
+		ModulePackType modules;
 
 	};
 
