@@ -1,14 +1,14 @@
 #ifndef _SUMMER_H
 #define _SUMMER_H
 
+#include <functional>
+#include <iostream>
+#include <list>
+#include <memory>
 #include <type_traits>
 #include <typeindex>
-#include <iostream>
 #include <unordered_map>
 #include <vector>
-#include <functional>
-#include <memory>
-#include <list>
 
 namespace summer {
 
@@ -23,10 +23,10 @@ namespace summer {
 		virtual void postConstruct(typename Application::Context& context) noexcept {}
 	};
 
-	template <typename T>
+	template <typename SingletonType>
 	class SingletonIdentifier {
 	public:
-		SingletonIdentifier() noexcept : SingletonIdentifier(typeid(T).name()) {}
+		SingletonIdentifier() noexcept : SingletonIdentifier(typeid(SingletonType).name()) {}
 
 		SingletonIdentifier(const char* name) noexcept : name(name) {}
 		SingletonIdentifier(const std::string& name) noexcept : name(name) {}
@@ -35,9 +35,6 @@ namespace summer {
 		const std::string& getName() const noexcept {
 			return name;
 		}
-
-	public:
-		using type = T;
 
 	private:
 		std::string name;
@@ -69,17 +66,17 @@ namespace summer {
 	public:
 		ContextBase(typename Application::ModulePack& modules) noexcept : modules(modules) {}
 
-		template <typename T>
-		T* getSingleton(const SingletonIdentifier<T>& singIden) noexcept {
-			if (auto it = singletons.find(std::make_pair(std::type_index(typeid(T)), singIden.getName())); it != singletons.end()) {
-				return static_cast<T*>(it->second.get());
+		template <typename SingletonType>
+		SingletonType* getSingleton(const SingletonIdentifier<SingletonType>& singIden) noexcept {
+			if (auto it = singletons.find(std::make_pair(std::type_index(typeid(SingletonType)), singIden.getName())); it != singletons.end()) {
+				return static_cast<SingletonType*>(it->second.get());
 			}
 
 			return nullptr;
 		}
 
-		template <typename T, typename ... Params>
-		void registerSingleton(const SingletonIdentifier<T>& singIden, const Params& ... params) noexcept {
+		template <typename SingletonType, typename ... Params>
+		void registerSingleton(const SingletonIdentifier<SingletonType>& singIden, const Params& ... params) noexcept {
 			if (singletonInstancers.find(singIden.getName()) != std::end(singletonInstancers)) {
 				std::cerr << "singleton [" << singIden.getName() << "] already registered" << std::endl;
 
@@ -91,8 +88,8 @@ namespace summer {
 					return false;
 				}
 
-				auto[pair, success] = singletons.emplace(std::make_pair(std::type_index(typeid(T)), singIden.getName()), std::make_unique<T>(getParam(params)...));
-				auto pSingleton = static_cast<T*>(pair->second.get());
+				auto[pair, success] = singletons.emplace(std::make_pair(std::type_index(typeid(SingletonType)), singIden.getName()), std::make_unique<SingletonType>(getParam(params)...));
+				auto pSingleton = static_cast<SingletonType*>(pair->second.get());
 
 				registerToModules.emplace_back([&, pSingleton]() {
 					std::apply([&, pSingleton](auto&... modules) {
@@ -150,25 +147,25 @@ namespace summer {
 
 	private:
 
-		template <typename T>
-		T& getParam(T& param) noexcept {
+		template <typename ParamType>
+		ParamType& getParam(ParamType& param) noexcept {
 			return param;
 		}
 
-		template <typename T>
-		T& getParam(const SingletonIdentifier<T>& singIden) noexcept {
+		template <typename SingletonType>
+		SingletonType& getParam(const SingletonIdentifier<SingletonType>& singIden) noexcept {
 			return *getSingleton(singIden);
 		}
 
 		bool prerequisitesReady() noexcept { return true; }
 
-		template <typename T, typename ... Params>
-		bool prerequisitesReady(const T& param, const Params& ... params) noexcept {
+		template <typename ParamType, typename ... ParamTypes>
+		bool prerequisitesReady(const ParamType& param, const ParamTypes& ... params) noexcept {
 			return prerequisitesReady(params...);
 		}
 
-		template <typename T, typename ... Params>
-		bool prerequisitesReady(const SingletonIdentifier<T>& singIden, const Params& ... params) noexcept {
+		template <typename SingletonType, typename ... ParamTypes>
+		bool prerequisitesReady(const SingletonIdentifier<SingletonType>& singIden, const ParamTypes& ... params) noexcept {
 			if (getSingleton(singIden) != nullptr) {
 				return prerequisitesReady(params...);
 			}
@@ -178,13 +175,13 @@ namespace summer {
 
 		void printMissing(int) noexcept {}
 
-		template <typename T, typename ... Params>
-		void printMissing(int index, const T& param, const Params& ... params) noexcept {
+		template <typename ParamType, typename ... ParamTypes>
+		void printMissing(int index, const ParamType& param, const ParamTypes& ... params) noexcept {
 			printMissing(index + 1, params...);
 		}
 
-		template <typename T, typename ... Params>
-		void printMissing(int index, const SingletonIdentifier<T>& singIden, const Params& ... params) noexcept {
+		template <typename SingletonType, typename ... ParamTypes>
+		void printMissing(int index, const SingletonIdentifier<SingletonType>& singIden, const ParamTypes& ... params) noexcept {
 			if (getSingleton(singIden) == nullptr) {
 				std::cerr << "  - param " << index << " [" << singIden.getName() << "] missing" << std::endl;
 			}
@@ -222,11 +219,11 @@ namespace summer {
 		}
 	};
 
-	template <typename T/* , typename std::enable_if_t<std::is_base_of_v<PrimarySource, T>>* = nullptr */>
+	template <typename SummerApplicationType>
 	class SummerApplication {
 	public:
 		static void run(int argc, char* argv[]) noexcept {
-			SummerApplication<T> summerApp;
+			SummerApplication<SummerApplicationType> summerApp;
 
 			auto args = std::vector<std::string>(argc);
 			for (int i = 0; i < argc; ++i) {
@@ -254,9 +251,9 @@ namespace summer {
 			}, modules);
 		}
 
-		T summerApp;
-		typename T::ModulePack modules;
-		typename T::Context context;
+		SummerApplicationType summerApp;
+		typename SummerApplicationType::ModulePack modules;
+		typename SummerApplicationType::Context context;
 
 	};
 
