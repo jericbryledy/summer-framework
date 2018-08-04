@@ -51,14 +51,14 @@ namespace summer {
 		}
 
 	private:
-		template <typename Singleton, typename SingletonType = void, typename ... SingletonTypes>
+		template <typename Singleton, typename SingletonTypeArg = void, typename ... SingletonTypeArgs>
 		void callRegister(Singleton& singleton) {
-			if constexpr (std::is_base_of_v<SingletonType, Singleton>) {
+			if constexpr (std::is_base_of_v<SingletonTypeArg, Singleton>) {
 				static_cast<Module*>(this)->registerType(singleton);
 			}
 
-			if constexpr (sizeof...(SingletonTypes) > 0) {
-				callRegister<Singleton, SingletonTypes...>(singleton);
+			if constexpr (sizeof...(SingletonTypeArgs) > 0) {
+				callRegister<Singleton, SingletonTypeArgs...>(singleton);
 			}
 		}
 	};
@@ -236,7 +236,7 @@ namespace summer {
 			}, modules);
 		}
 
-		typename T summerApp;
+		T summerApp;
 		typename T::ModulePack modules;
 		typename T::Context context;
 
