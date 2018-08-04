@@ -6,9 +6,7 @@
 namespace summer::util {
 	
 	template <typename T>
-	T convert(const std::string& input) {
-		static_assert(false, "no default implementation for the specified type");
-	}
+	T convert(const std::string& input);
 
 	template <>
 	int convert(const std::string& input) {
