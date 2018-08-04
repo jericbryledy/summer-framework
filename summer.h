@@ -74,6 +74,13 @@ namespace summer {
 				}
 
 				auto[pair, success] = singletons.emplace(singIden.getName(), std::make_unique<T>(getParam(params)...));
+				auto pSingleton = pair->second.get();
+
+				registerToModules.emplace_back([&, pSingleton]() {
+					std::apply([&, pSingleton](auto&... modules) {
+						(modules.apply(*pSingleton), ...);
+					}, modules);
+				});
 
 				return true;
 			};
@@ -115,10 +122,19 @@ namespace summer {
 			}
 		}
 
+		void registerSingletonsToModules() noexcept {
+			for (auto& func : registerToModules) {
+				func();
+			}
+
+			registerToModules.clear();
+		}
+
 	private:
 		typename Application::ModulePack& modules;
 		std::unordered_map<std::string, std::unique_ptr<typename Application::Singleton>> singletons;
 		std::unordered_map<std::string, std::tuple<std::function<bool()>, std::function<void()>>> singletonInstancers;
+		std::vector<std::function<void()>> registerToModules;
 
 		template <typename T>
 		T& getParam(T& param) noexcept {
@@ -198,6 +214,7 @@ namespace summer {
 			summerApp.setup(context);
 			context.instantiateSingletons();
 			context.doPostConstructs();
+			context.registerSingletonsToModules();
 		}
 
 		void initializeModules(std::vector<std::string>& args) noexcept {
@@ -206,9 +223,9 @@ namespace summer {
 			}, modules);
 		}
 
-		typename T::Context context;
 		typename T summerApp;
 		typename T::ModulePack modules;
+		typename T::Context context;
 
 	};
 
