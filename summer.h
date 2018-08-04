@@ -42,11 +42,24 @@ namespace summer {
 		std::string name;
 	};
 
+	template <typename Module, typename ... SingletonTypes>
 	class ModuleBase {
 	public:
 		template <typename Singleton>
-		void apply(Singleton& singleton) {
-			std::cout << "apply base " << typeid(Singleton).name() << std::endl;
+		void registerSingleton(Singleton& singleton) {
+			callRegister<Singleton, SingletonTypes...>(singleton);
+		}
+
+	private:
+		template <typename Singleton, typename SingletonType = void, typename ... SingletonTypes>
+		void callRegister(Singleton& singleton) {
+			if constexpr (std::is_base_of_v<SingletonType, Singleton>) {
+				static_cast<Module*>(this)->registerType(singleton);
+			}
+
+			if constexpr (sizeof...(SingletonTypes) > 0) {
+				callRegister<Singleton, SingletonTypes...>(singleton);
+			}
 		}
 	};
 
@@ -74,11 +87,11 @@ namespace summer {
 				}
 
 				auto[pair, success] = singletons.emplace(singIden.getName(), std::make_unique<T>(getParam(params)...));
-				auto pSingleton = pair->second.get();
+				auto pSingleton = static_cast<T*>(pair->second.get());
 
 				registerToModules.emplace_back([&, pSingleton]() {
 					std::apply([&, pSingleton](auto&... modules) {
-						(modules.apply(*pSingleton), ...);
+						(modules.registerSingleton(*pSingleton), ...);
 					}, modules);
 				});
 

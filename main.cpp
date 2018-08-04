@@ -5,44 +5,34 @@
 #include <string>
 #include <iostream>
 
+class WebController {};
 
-class ModuleA : public summer::ModuleBase {
+class WebModule : public summer::ModuleBase<WebModule, WebController>{
 public:
 	void initialize(std::vector<std::string>& args) {
-		std::cout << "module a initialize!" << std::endl;
+		std::cout << "web module initialize!" << std::endl;
 	}
 
-	template <typename Singleton>
-	void apply(Singleton& singleton) {
-		std::cout << "apple a " << typeid(Singleton).name() << std::endl;
+	void registerType(WebController& webcontroller) {
+		std::cout << "web controller registered!" << std::endl;
 	}
 };
 
-class ModuleB {
+class ModuleB : public summer::ModuleBase<ModuleB>{
 public:
 	void initialize(std::vector<std::string>& args) {
 		std::cout << "module b initialize!" << std::endl;
 	}
-
-	template <typename Singleton>
-	void apply(Singleton& singleton) {
-		std::cout << "banana b " << typeid(Singleton).name() << std::endl;
-	}
 };
 
-class ModuleC {
+class ModuleC : public summer::ModuleBase<ModuleC> {
 public:
 	void initialize(std::vector<std::string>& args) {
 		std::cout << "module c initialize!" << std::endl;
 	}
-
-	template <typename Singleton>
-	void apply(Singleton& singleton) {
-		std::cout << "cat c " << typeid(Singleton).name() << std::endl;
-	}
 };
 
-using SampleApplicationType = summer::ApplicationBase<ModuleA, ModuleB, ModuleC>;
+using SampleApplicationType = summer::ApplicationBase<WebModule, ModuleB, ModuleC>;
 
 class SampleConfig : public SampleApplicationType::Singleton {
 public:
@@ -57,7 +47,7 @@ private:
 	std::string path;
 };
 
-class SampleSingleton : public SampleApplicationType::Singleton {
+class SampleSingleton : public SampleApplicationType::Singleton, public WebController {
 public:
 	SampleSingleton(SampleConfig& config) {
 		std::cout << "sample singleton path: " << config.getPath() << std::endl;
