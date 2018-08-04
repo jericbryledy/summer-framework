@@ -11,13 +11,15 @@
 
 namespace summer {
 
-	class ApplicationContext;
+	template <typename Application>
+	class ContextBase;
 
+	template <typename Application>
 	class SingletonBase {
 	public:
 		virtual ~SingletonBase() noexcept {}
 
-		virtual void postConstruct(ApplicationContext& context) noexcept {}
+		virtual void postConstruct(typename Application::Context& context) noexcept {}
 	};
 
 	template <typename T>
@@ -40,8 +42,19 @@ namespace summer {
 		std::string name;
 	};
 
-	class ApplicationContext {
+	class ModuleBase {
 	public:
+		template <typename Singleton>
+		void apply(Singleton& singleton) {
+			std::cout << "apply base " << typeid(Singleton).name() << std::endl;
+		}
+	};
+
+	template <typename Application>
+	class ContextBase {
+	public:
+		ContextBase(typename Application::ModulePack& modules) noexcept : modules(modules) {}
+
 		template <typename T>
 		T* getSingleton(const SingletonIdentifier<T>& singIden) noexcept {
 			return static_cast<T*>(singletons[singIden.getName()].get());
@@ -60,7 +73,7 @@ namespace summer {
 					return false;
 				}
 
-				singletons.emplace(singIden.getName(), std::make_unique<T>(getParam(params)...));
+				auto[pair, success] = singletons.emplace(singIden.getName(), std::make_unique<T>(getParam(params)...));
 
 				return true;
 			};
@@ -103,7 +116,8 @@ namespace summer {
 		}
 
 	private:
-		std::unordered_map<std::string, std::unique_ptr<SingletonBase>> singletons;
+		typename Application::ModulePack& modules;
+		std::unordered_map<std::string, std::unique_ptr<typename Application::Singleton>> singletons;
 		std::unordered_map<std::string, std::tuple<std::function<bool()>, std::function<void()>>> singletonInstancers;
 
 		template <typename T>
@@ -149,21 +163,23 @@ namespace summer {
 		}
 	};
 
-	class PrimarySource {
+	template <typename ... Modules>
+	class ApplicationBase {
 	public:
-		void setup(const ApplicationContext& context) noexcept {
+		using ModulePack = std::tuple<Modules...>;
+		using Context = ContextBase<ApplicationBase<Modules...>>;
+		using Singleton = SingletonBase<ApplicationBase<Modules...>>;
+
+		void setup(const Context& context) noexcept {
 			std::cout << "default setup" << std::endl;
 		}
 	};
 
-	template <typename ... Modules>
-	using ModulePack = std::tuple<Modules...>;
-
-	template <typename T, typename ModulePackType = ModulePack<>, typename std::enable_if_t<std::is_base_of_v<PrimarySource, T>>* = nullptr>
+	template <typename T/* , typename std::enable_if_t<std::is_base_of_v<PrimarySource, T>>* = nullptr */>
 	class SummerApplication {
 	public:
 		static void run(int argc, char* argv[]) noexcept {
-			SummerApplication<T, ModulePackType> summerApp;
+			SummerApplication<T> summerApp;
 
 			auto args = std::vector<std::string>(argc);
 			for (int i = 0; i < argc; ++i) {
@@ -174,6 +190,8 @@ namespace summer {
 		}
 
 	private:
+		SummerApplication() noexcept : context(modules) {}
+
 		void initialize(std::vector<std::string>& args) noexcept {
 			initializeModules(args);
 
@@ -183,14 +201,14 @@ namespace summer {
 		}
 
 		void initializeModules(std::vector<std::string>& args) noexcept {
-			std::apply([&args](auto&... module) {
-				(module.initialize(args), ...);
+			std::apply([&args](auto&... modules) {
+				(modules.initialize(args), ...);
 			}, modules);
 		}
 
-		ApplicationContext context;
-		T summerApp;
-		ModulePackType modules;
+		typename T::Context context;
+		typename T summerApp;
+		typename T::ModulePack modules;
 
 	};
 
