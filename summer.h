@@ -70,7 +70,10 @@ namespace summer {
 
 		template <typename T>
 		T* getSingleton(const SingletonIdentifier<T>& singIden) noexcept {
-			return static_cast<T*>(singletons[singIden.getName()].get());
+			if (auto it = singletons.find(singIden.getName()); it != singletons.end()) {
+				return static_cast<T*>(it->second.get());
+			}
+			return nullptr;
 		}
 
 		template <typename T, typename ... Params>
