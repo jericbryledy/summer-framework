@@ -2,6 +2,7 @@
 #define _SUMMER_H
 
 #include <type_traits>
+#include <typeindex>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
@@ -70,9 +71,10 @@ namespace summer {
 
 		template <typename T>
 		T* getSingleton(const SingletonIdentifier<T>& singIden) noexcept {
-			if (auto it = singletons.find(singIden.getName()); it != singletons.end()) {
+			if (auto it = singletons.find(std::make_pair(std::type_index(typeid(T)), singIden.getName())); it != singletons.end()) {
 				return static_cast<T*>(it->second.get());
 			}
+
 			return nullptr;
 		}
 
@@ -89,7 +91,7 @@ namespace summer {
 					return false;
 				}
 
-				auto[pair, success] = singletons.emplace(singIden.getName(), std::make_unique<T>(getParam(params)...));
+				auto[pair, success] = singletons.emplace(std::make_pair(std::type_index(typeid(T)), singIden.getName()), std::make_unique<T>(getParam(params)...));
 				auto pSingleton = static_cast<T*>(pair->second.get());
 
 				registerToModules.emplace_back([&, pSingleton]() {
@@ -147,10 +149,6 @@ namespace summer {
 		}
 
 	private:
-		typename Application::ModulePack& modules;
-		std::unordered_map<std::string, std::unique_ptr<typename Application::Singleton>> singletons;
-		std::unordered_map<std::string, std::tuple<std::function<bool()>, std::function<void()>>> singletonInstancers;
-		std::vector<std::function<void()>> registerToModules;
 
 		template <typename T>
 		T& getParam(T& param) noexcept {
@@ -193,6 +191,23 @@ namespace summer {
 
 			printMissing(index + 1, params...);
 		}
+
+		using SingletonKey = std::pair<std::type_index, std::string>;
+
+		struct KeyHasher {
+			std::size_t operator()(const SingletonKey& key) const {
+				auto hash0 = std::get<0>(key).hash_code();
+				auto hash1 = std::hash<std::string>{}(std::get<1>(key));
+
+				// formula taken from boost::hash_combine
+				return hash0 ^ (hash1 + 0x9e3779b9 + (hash0 << 6) + (hash0 >> 2));
+			}
+		};
+
+		typename Application::ModulePack& modules;
+		std::unordered_map<SingletonKey, std::unique_ptr<typename Application::Singleton>, KeyHasher> singletons;
+		std::unordered_map<std::string, std::tuple<std::function<bool()>, std::function<void()>>> singletonInstancers;
+		std::vector<std::function<void()>> registerToModules;
 	};
 
 	template <typename ... Modules>
