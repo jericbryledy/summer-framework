@@ -9,27 +9,27 @@
 
 namespace summer::util {
 
-	class PropertyValue {
+	class property_value {
 	public:
-		PropertyValue() = default;
+		property_value() = default;
 
 		template<typename T>
-		PropertyValue(T&& value) : value(std::forward<T>(value)) {}
+		property_value(T&& value) : value_(std::forward<T>(value)) {}
 
 		template <typename T>
 		operator T() const {
-			return convert<T>(value);
+			return convert<T>(value_);
 		}
 
 		operator std::string() const {
-			return value;
+			return value_;
 		}
 
 	private:
-		std::string value;
+		std::string value_;
 	};
 
-	class Properties {
+	class properties {
 	public:
 		template <typename T>
 		bool load(T&& path) noexcept {
@@ -45,11 +45,11 @@ namespace summer::util {
 						continue;
 					}
 
-					if (auto splitIndex = line.find('='); splitIndex != std::string::npos) {
-						auto key = line.substr(0, splitIndex);
-						auto value = line.substr(splitIndex + 1);
+					if (auto split_index = line.find('='); split_index != std::string::npos) {
+						auto key = line.substr(0, split_index);
+						auto value = line.substr(split_index + 1);
 
-						values.emplace(std::move(key), std::move(value));
+						values_.emplace(std::move(key), std::move(value));
 					}
 				}
 
@@ -60,13 +60,13 @@ namespace summer::util {
 		}
 
 		template <typename T>
-		const PropertyValue& operator[] (T&& key) const noexcept {
-			return getProperty(std::forward<T>(key));
+		const property_value& operator[] (T&& key) const noexcept {
+			return get_property(std::forward<T>(key));
 		}
 
 		template <typename T>
-		const PropertyValue& getProperty(T&& key) const noexcept {
-			if (auto res = values.find(std::forward<T>(key)); res != values.end()) {
+		const property_value& get_property(T&& key) const noexcept {
+			if (auto res = values_.find(std::forward<T>(key)); res != values_.end()) {
 				return res->second;
 			}
 
@@ -74,17 +74,17 @@ namespace summer::util {
 		}
 
 		template <typename T, typename U, typename V = std::conditional_t<std::is_convertible_v<U, std::string>, std::string, U>>
-		V getProperty(T&& key, U defaultValue) const noexcept {
-			if (auto res = values.find(std::forward<T>(key)); res != values.end()) {
+		V get_property(T&& key, U default_value) const noexcept {
+			if (auto res = values_.find(std::forward<T>(key)); res != values_.end()) {
 				return res->second;
 			}
 
-			return defaultValue;
+			return default_value;
 		}
 
 
 	private:
-		std::unordered_map<std::string, PropertyValue> values;
+		std::unordered_map<std::string, property_value> values_;
 	};
 
 }

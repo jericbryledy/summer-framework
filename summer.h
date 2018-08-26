@@ -13,62 +13,62 @@
 namespace summer {
 
 	template <typename Application>
-	class ContextBase;
+	class context_base;
 
 	template <typename Application>
-	class SingletonBase {
+	class singleton_base {
 	public:
-		virtual ~SingletonBase() noexcept {}
+		virtual ~singleton_base() noexcept {}
 
-		virtual void postConstruct(typename Application::Context& context) noexcept {}
+		virtual void post_construct(typename Application::context& context) noexcept {}
 	};
 
 	template <typename SingletonType>
-	class SingletonIdentifier {
+	class singleton_identifier {
 	public:
-		SingletonIdentifier() noexcept : SingletonIdentifier(typeid(SingletonType).name()) {}
+		singleton_identifier() noexcept : singleton_identifier(typeid(SingletonType).name()) {}
 
-		SingletonIdentifier(const char* name) noexcept : name(name) {}
-		SingletonIdentifier(const std::string& name) noexcept : name(name) {}
-		SingletonIdentifier(std::string&& name) noexcept : name(std::move(name)) {}
+		singleton_identifier(const char* name) noexcept : name_(name) {}
+		singleton_identifier(const std::string& name) noexcept : name_(name) {}
+		singleton_identifier(std::string&& name) noexcept : name_(std::move(name)) {}
 
-		const std::string& getName() const noexcept {
-			return name;
+		const std::string& name() const noexcept {
+			return name_;
 		}
 
 	private:
-		std::string name;
+		std::string name_;
 	};
 
 	template <typename Module, typename ... SingletonTypes>
-	class ModuleBase {
+	class module_base {
 	public:
 		template <typename Singleton>
-		void registerSingleton(Singleton& singleton) {
-			callRegister<Singleton, SingletonTypes...>(singleton);
+		void register_singleton(Singleton& singleton) {
+			call_register<Singleton, SingletonTypes...>(singleton);
 		}
 
 	private:
 		template <typename Singleton, typename SingletonTypeArg = void, typename ... SingletonTypeArgs>
-		void callRegister(Singleton& singleton) {
+		void call_register(Singleton& singleton) {
 			if constexpr (std::is_base_of_v<SingletonTypeArg, Singleton>) {
-				static_cast<Module*>(this)->registerType(singleton);
+				static_cast<Module*>(this)->register_type(singleton);
 			}
 
 			if constexpr (sizeof...(SingletonTypeArgs) > 0) {
-				callRegister<Singleton, SingletonTypeArgs...>(singleton);
+				call_register<Singleton, SingletonTypeArgs...>(singleton);
 			}
 		}
 	};
 
 	template <typename Application>
-	class ContextBase {
+	class context_base {
 	public:
-		ContextBase(typename Application::ModulePack& modules) noexcept : modules(modules) {}
+		context_base(typename Application::module_pack& modules) noexcept : modules(modules) {}
 
 		template <typename SingletonType>
-		SingletonType* getSingleton(const SingletonIdentifier<SingletonType>& singIden) noexcept {
-			if (auto it = singletons.find(std::make_pair(std::type_index(typeid(SingletonType)), singIden.getName())); it != singletons.end()) {
+		SingletonType* get_singleton(const singleton_identifier<SingletonType>& singl_iden) noexcept {
+			if (auto it = singletons.find(std::make_pair(std::type_index(typeid(SingletonType)), singl_iden.name())); it != singletons.end()) {
 				return static_cast<SingletonType*>(it->second.get());
 			}
 
@@ -76,45 +76,45 @@ namespace summer {
 		}
 
 		template <typename SingletonType, typename ... Params>
-		void registerSingleton(const SingletonIdentifier<SingletonType>& singIden, const Params& ... params) noexcept {
-			if (singletonInstancers.find(singIden.getName()) != std::end(singletonInstancers)) {
-				std::cerr << "singleton [" << singIden.getName() << "] already registered" << std::endl;
+		void register_singleton(const singleton_identifier<SingletonType>& singl_iden, const Params& ... params) noexcept {
+			if (singleton_instancers.find(singl_iden.name()) != std::end(singleton_instancers)) {
+				std::cerr << "singleton [" << singl_iden.name() << "] already registered" << std::endl;
 
 				return;
 			}
 
 			std::function<bool()> instantiator = [=]() {
-				if (!prerequisitesReady(params...)) {
+				if (!prerequisites_ready(params...)) {
 					return false;
 				}
 
-				auto[pair, success] = singletons.emplace(std::make_pair(std::type_index(typeid(SingletonType)), singIden.getName()), std::make_unique<SingletonType>(getParam(params)...));
-				auto pSingleton = static_cast<SingletonType*>(pair->second.get());
+				auto[pair, success] = singletons.emplace(std::make_pair(std::type_index(typeid(SingletonType)), singl_iden.name()), std::make_unique<SingletonType>(get_param(params)...));
+				auto singleton_ptr = static_cast<SingletonType*>(pair->second.get());
 
-				registerToModules.emplace_back([&, pSingleton]() {
-					std::apply([&, pSingleton](auto&... modules) {
-						(modules.registerSingleton(*pSingleton), ...);
+				register_to_modules.emplace_back([&, singleton_ptr]() {
+					std::apply([&, singleton_ptr](auto&... modules) {
+						(modules.register_singleton(*singleton_ptr), ...);
 					}, modules);
 				});
 
 				return true;
 			};
 
-			std::function<void()> errorLogger = [=]() {
-				std::cerr << "error instantiating [" << singIden.getName() << ']' << std::endl;
-				printMissing(1, params...);
+			std::function<void()> error_logger = [=]() {
+				std::cerr << "error instantiating [" << singl_iden.name() << ']' << std::endl;
+				print_missing(1, params...);
 			};
 
-			singletonInstancers[singIden.getName()] = std::make_pair(instantiator, errorLogger);
+			singleton_instancers[singl_iden.name()] = std::make_pair(instantiator, error_logger);
 		}
 
-		bool instantiateSingletons() noexcept {
+		bool instantiate_singletons() noexcept {
 			for (auto progress = true; progress; ) {
 				progress = false;
 
-				for (auto iter = std::begin(singletonInstancers); iter != std::end(singletonInstancers); ) {
+				for (auto iter = std::begin(singleton_instancers); iter != std::end(singleton_instancers); ) {
 					if (std::get<0>(iter->second)()) {
-						iter = singletonInstancers.erase(iter);
+						iter = singleton_instancers.erase(iter);
 						progress = true;
 					} else {
 						++iter;
@@ -122,77 +122,77 @@ namespace summer {
 				}
 			}
 
-			for (auto[name, instantiatorPair] : singletonInstancers) {
-				auto[instantiator, errorLogger] = instantiatorPair;
+			for (auto[name, instantiator_pair] : singleton_instancers) {
+				auto[instantiator, error_logger] = instantiator_pair;
 
-				errorLogger();
+				error_logger();
 			}
 
-			return !singletonInstancers.size();
+			return !singleton_instancers.size();
 		}
 
-		void doPostConstructs() noexcept {
+		void do_post_constructs() noexcept {
 			for (auto it = std::begin(singletons); it != std::end(singletons); ++it) {
-				it->second->postConstruct(*this);
+				it->second->post_construct(*this);
 			}
 		}
 
-		void registerSingletonsToModules() noexcept {
-			for (auto& func : registerToModules) {
+		void register_singletons_to_modules() noexcept {
+			for (auto& func : register_to_modules) {
 				func();
 			}
 
-			registerToModules.clear();
+			register_to_modules.clear();
 		}
 
 	private:
 
 		template <typename ParamType>
-		ParamType& getParam(ParamType& param) noexcept {
+		ParamType& get_param(ParamType& param) noexcept {
 			return param;
 		}
 
 		template <typename SingletonType>
-		SingletonType& getParam(const SingletonIdentifier<SingletonType>& singIden) noexcept {
-			return *getSingleton(singIden);
+		SingletonType& get_param(const singleton_identifier<SingletonType>& singl_iden) noexcept {
+			return *get_singleton(singl_iden);
 		}
 
-		bool prerequisitesReady() noexcept { return true; }
+		bool prerequisites_ready() noexcept { return true; }
 
 		template <typename ParamType, typename ... ParamTypes>
-		bool prerequisitesReady(const ParamType& param, const ParamTypes& ... params) noexcept {
-			return prerequisitesReady(params...);
+		bool prerequisites_ready(const ParamType& param, const ParamTypes& ... params) noexcept {
+			return prerequisites_ready(params...);
 		}
 
 		template <typename SingletonType, typename ... ParamTypes>
-		bool prerequisitesReady(const SingletonIdentifier<SingletonType>& singIden, const ParamTypes& ... params) noexcept {
-			if (getSingleton(singIden) != nullptr) {
-				return prerequisitesReady(params...);
+		bool prerequisites_ready(const singleton_identifier<SingletonType>& singl_iden, const ParamTypes& ... params) noexcept {
+			if (get_singleton(singl_iden) != nullptr) {
+				return prerequisites_ready(params...);
 			}
 
 			return false;
 		}
 
-		void printMissing(int) noexcept {}
+		void print_missing(int) noexcept {}
 
 		template <typename ParamType, typename ... ParamTypes>
-		void printMissing(int index, const ParamType& param, const ParamTypes& ... params) noexcept {
-			printMissing(index + 1, params...);
+		void print_missing(int index, const ParamType& param, const ParamTypes& ... params) noexcept {
+			print_missing(index + 1, params...);
 		}
 
 		template <typename SingletonType, typename ... ParamTypes>
-		void printMissing(int index, const SingletonIdentifier<SingletonType>& singIden, const ParamTypes& ... params) noexcept {
-			if (getSingleton(singIden) == nullptr) {
-				std::cerr << "  - param " << index << " [" << singIden.getName() << "] missing" << std::endl;
+		void print_missing(int index, const singleton_identifier<SingletonType>& singl_iden, const ParamTypes& ... params) noexcept {
+			if (get_singleton(singl_iden) == nullptr) {
+				std::cerr << "  - param " << index << " [" << singl_iden.name() << "] missing" << std::endl;
 			}
 
-			printMissing(index + 1, params...);
+			print_missing(index + 1, params...);
 		}
 
-		using SingletonKey = std::pair<std::type_index, std::string>;
+		using singleton_key = std::pair<std::type_index, std::string>;
 
-		struct KeyHasher {
-			std::size_t operator()(const SingletonKey& key) const {
+		struct key_hasher {
+			std::size_t operator()(const singleton_key& key) const {
 				auto hash0 = std::get<0>(key).hash_code();
 				auto hash1 = std::hash<std::string>{}(std::get<1>(key));
 
@@ -201,59 +201,59 @@ namespace summer {
 			}
 		};
 
-		typename Application::ModulePack& modules;
-		std::unordered_map<SingletonKey, std::unique_ptr<typename Application::Singleton>, KeyHasher> singletons;
-		std::unordered_map<std::string, std::tuple<std::function<bool()>, std::function<void()>>> singletonInstancers;
-		std::vector<std::function<void()>> registerToModules;
+		typename Application::module_pack& modules;
+		std::unordered_map<singleton_key, std::unique_ptr<typename Application::singleton>, key_hasher> singletons;
+		std::unordered_map<std::string, std::tuple<std::function<bool()>, std::function<void()>>> singleton_instancers;
+		std::vector<std::function<void()>> register_to_modules;
 	};
 
 	template <typename ... Modules>
-	class ApplicationBase {
+	class application_base {
 	public:
-		using ModulePack = std::tuple<Modules...>;
-		using Context = ContextBase<ApplicationBase<Modules...>>;
-		using Singleton = SingletonBase<ApplicationBase<Modules...>>;
+		using module_pack = std::tuple<Modules...>;
+		using context = context_base<application_base<Modules...>>;
+		using singleton = singleton_base<application_base<Modules...>>;
 
-		void setup(const Context& context) noexcept {
+		void setup(const context& context) noexcept {
 			std::cout << "default setup" << std::endl;
 		}
 	};
 
 	template <typename SummerApplicationType>
-	class SummerApplication {
+	class summer_application {
 	public:
 		static void run(int argc, char* argv[]) noexcept {
-			SummerApplication<SummerApplicationType> summerApp;
+			summer_application<SummerApplicationType> summer_app_;
 
 			auto args = std::vector<std::string>(argc);
 			for (int i = 0; i < argc; ++i) {
 				args.emplace_back(argv[i]);
 			}
 
-			summerApp.initialize(args);
+			summer_app_.initialize(args);
 		}
 
 	private:
-		SummerApplication() noexcept : context(modules) {}
+		summer_application() noexcept : context_(modules_) {}
 
 		void initialize(std::vector<std::string>& args) noexcept {
 			initializeModules(args);
 
-			summerApp.setup(context);
-			context.instantiateSingletons();
-			context.doPostConstructs();
-			context.registerSingletonsToModules();
+			summer_app_.setup(context_);
+			context_.instantiate_singletons();
+			context_.do_post_constructs();
+			context_.register_singletons_to_modules();
 		}
 
 		void initializeModules(std::vector<std::string>& args) noexcept {
 			std::apply([&args](auto&... modules) {
 				(modules.initialize(args), ...);
-			}, modules);
+			}, modules_);
 		}
 
-		SummerApplicationType summerApp;
-		typename SummerApplicationType::ModulePack modules;
-		typename SummerApplicationType::Context context;
+		SummerApplicationType summer_app_;
+		typename SummerApplicationType::module_pack modules_;
+		typename SummerApplicationType::context context_;
 
 	};
 
