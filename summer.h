@@ -101,7 +101,7 @@ namespace summer {
 
 		template <typename SingletonType, typename ... Params>
 		void register_singleton(const singleton_identifier<SingletonType>& singl_iden, const Params& ... params) noexcept {
-			if (singleton_instancers.find(singl_iden.name()) != std::end(singleton_instancers)) {
+			if (exists(singl_iden.name())) {
 				std::cerr << "singleton [" << singl_iden.name() << "] already registered" << std::endl;
 
 				return;
@@ -130,6 +130,15 @@ namespace summer {
 			};
 
 			singleton_instancers[singl_iden.name()] = std::make_pair(instantiator, error_logger);
+		}
+
+		template <typename SingletonType>
+		bool exists(const singleton_identifier<SingletonType>& singl_iden) {
+			return exists(singl_iden.name());
+		}
+
+		bool exists(const std::string& name) {
+			return singleton_instancers.find(name) != std::end(singleton_instancers);
 		}
 
 		bool instantiate_singletons() noexcept {
@@ -248,9 +257,10 @@ namespace summer {
 		summer_application() noexcept : context_support(&context, modules) {}
 
 		void initialize(std::vector<std::string>& args) noexcept {
+			summer_app.setup(context_support);
+
 			initializeModules(args);
 
-			summer_app.setup(context_support);
 			context_support.instantiate_singletons();
 			context_support.do_post_constructs();
 			context_support.register_singletons_to_modules();
