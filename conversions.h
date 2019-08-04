@@ -6,45 +6,45 @@
 namespace summer::util {
 	
 	template <typename T>
-	T convert(const std::string& input);
+	T convert(std::string const& input);
 
 	template <>
-	int convert(const std::string& input) {
+	int convert(std::string const& input) {
 		return std::stoi(input);
 	}
 
 	template <>
-	long convert(const std::string& input) {
+	long convert(std::string const& input) {
 		return std::stol(input);
 	}
 
 	template <>
-	unsigned long convert(const std::string& input) {
+	unsigned long convert(std::string const& input) {
 		return std::stoul(input);
 	}
 
 	template <>
-	long long convert(const std::string& input) {
+	long long convert(std::string const& input) {
 		return std::stoll(input);
 	}
 
 	template <>
-	unsigned long long convert(const std::string& input) {
+	unsigned long long convert(std::string const& input) {
 		return std::stoull(input);
 	}
 
 	template <>
-	float convert(const std::string& input) {
+	float convert(std::string const& input) {
 		return std::stof(input);
 	}
 
 	template <>
-	double convert(const std::string& input) {
+	double convert(std::string const& input) {
 		return std::stod(input);
 	}
 
 	template <>
-	long double convert(const std::string& input) {
+	long double convert(std::string const& input) {
 		return std::stold(input);
 	}
 

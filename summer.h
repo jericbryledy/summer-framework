@@ -30,11 +30,11 @@ namespace summer {
 	public:
 		singleton_identifier() noexcept : singleton_identifier(typeid(SingletonType).name()) {}
 
-		singleton_identifier(const char* name) noexcept : name_(name) {}
-		singleton_identifier(const std::string& name) noexcept : name_(name) {}
+		singleton_identifier(char const* name) noexcept : name_(name) {}
+		singleton_identifier(std::string const& name) noexcept : name_(name) {}
 		singleton_identifier(std::string&& name) noexcept : name_(std::move(name)) {}
 
-		const std::string& name() const noexcept {
+		std::string const& name() const noexcept {
 			return name_;
 		}
 
@@ -67,7 +67,7 @@ namespace summer {
 	public:
 
 		template <typename SingletonType>
-		SingletonType* get_singleton(const singleton_identifier<SingletonType>& singl_iden) noexcept {
+		SingletonType* get_singleton(singleton_identifier<SingletonType> const& singl_iden) noexcept {
 			if (auto it = singletons.find(std::make_pair(std::type_index(typeid(SingletonType)), singl_iden.name())); it != singletons.end()) {
 				return static_cast<SingletonType*>(it->second.get());
 			}
@@ -80,7 +80,7 @@ namespace summer {
 		using singleton_key = std::pair<std::type_index, std::string>;
 
 		struct key_hasher {
-			std::size_t operator()(const singleton_key& key) const {
+			std::size_t operator()(singleton_key const& key) const {
 				auto hash0 = std::get<0>(key).hash_code();
 				auto hash1 = std::hash<std::string>{}(std::get<1>(key));
 
@@ -101,7 +101,7 @@ namespace summer {
 		context_support(application_context* context, ModulePack& modules) noexcept : context(context), modules(modules) {}
 
 		template <typename SingletonType, typename ... Params>
-		void register_singleton(const singleton_identifier<SingletonType>& singl_iden, const Params& ... params) noexcept {
+		void register_singleton(singleton_identifier<SingletonType> const& singl_iden, Params const& ... params) noexcept {
 			if (exists(singl_iden.name())) {
 				std::cerr << "singleton [" << singl_iden.name() << "] already registered" << std::endl;
 
@@ -134,11 +134,11 @@ namespace summer {
 		}
 
 		template <typename SingletonType>
-		bool exists(const singleton_identifier<SingletonType>& singl_iden) {
+		bool exists(singleton_identifier<SingletonType> const& singl_iden) {
 			return exists(singl_iden.name());
 		}
 
-		bool exists(const std::string& name) {
+		bool exists(std::string const& name) {
 			return singleton_instancers.find(name) != std::end(singleton_instancers);
 		}
 
@@ -187,19 +187,19 @@ namespace summer {
 		}
 
 		template <typename SingletonType>
-		SingletonType& get_param(const singleton_identifier<SingletonType>& singl_iden) noexcept {
+		SingletonType& get_param(singleton_identifier<SingletonType> const& singl_iden) noexcept {
 			return *context->get_singleton(singl_iden);
 		}
 
 		bool prerequisites_ready() noexcept { return true; }
 
 		template <typename ParamType, typename ... ParamTypes>
-		bool prerequisites_ready(const ParamType& param, const ParamTypes& ... params) noexcept {
+		bool prerequisites_ready(ParamType const& param, ParamTypes const& ... params) noexcept {
 			return prerequisites_ready(params...);
 		}
 
 		template <typename SingletonType, typename ... ParamTypes>
-		bool prerequisites_ready(const singleton_identifier<SingletonType>& singl_iden, const ParamTypes& ... params) noexcept {
+		bool prerequisites_ready(singleton_identifier<SingletonType> const& singl_iden, ParamTypes const& ... params) noexcept {
 			if (context->get_singleton(singl_iden) != nullptr) {
 				return prerequisites_ready(params...);
 			}
@@ -210,12 +210,12 @@ namespace summer {
 		void print_missing(int) noexcept {}
 
 		template <typename ParamType, typename ... ParamTypes>
-		void print_missing(int index, const ParamType& param, const ParamTypes& ... params) noexcept {
+		void print_missing(int index, ParamType const& param, ParamTypes const& ... params) noexcept {
 			print_missing(index + 1, params...);
 		}
 
 		template <typename SingletonType, typename ... ParamTypes>
-		void print_missing(int index, const singleton_identifier<SingletonType>& singl_iden, const ParamTypes& ... params) noexcept {
+		void print_missing(int index, singleton_identifier<SingletonType> const& singl_iden, ParamTypes const& ... params) noexcept {
 			if (context->get_singleton(singl_iden) == nullptr) {
 				std::cerr << "  - param " << index << " [" << singl_iden.name() << "] missing" << std::endl;
 			}
@@ -235,7 +235,7 @@ namespace summer {
 		using module_pack = std::tuple<Modules...>;
 		using context_support_t = context_support<module_pack>;
 
-		void setup(const context_support_t& context_support) noexcept {
+		void setup(context_support_t const& context_support) noexcept {
 			std::cout << "default setup" << std::endl;
 		}
 	};

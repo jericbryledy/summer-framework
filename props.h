@@ -60,12 +60,12 @@ namespace summer::util {
 		}
 
 		template <typename T>
-		const property_value& operator[] (T&& key) const noexcept {
+		property_value const& operator[] (T&& key) const noexcept {
 			return get_property(std::forward<T>(key));
 		}
 
 		template <typename T>
-		const property_value& get_property(T&& key) const noexcept {
+		property_value const& get_property(T&& key) const noexcept {
 			if (auto res = values_.find(std::forward<T>(key)); res != values_.end()) {
 				return res->second;
 			}

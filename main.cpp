@@ -30,7 +30,7 @@ public:
 		std::cout << "load: " << path << std::endl;
 	}
 
-	const std::string& path() {
+	std::string const& path() {
 		return path_;
 	}
 private:
@@ -50,7 +50,7 @@ public:
 	}
 
 private:
-	sample_config * config_;
+	sample_config* config_;
 };
 
 class sample_application : public sample_application_type {
