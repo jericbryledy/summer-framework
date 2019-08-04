@@ -1,6 +1,7 @@
 #ifndef _SUMMER_H
 #define _SUMMER_H
 
+#include <typeinfo>
 #include <functional>
 #include <iostream>
 #include <list>
