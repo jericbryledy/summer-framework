@@ -70,7 +70,7 @@ namespace summer::util {
 				return res->second;
 			}
 
-			return {};
+			return property_value();
 		}
 
 		template <typename T, typename U, typename V = std::conditional_t<std::is_convertible_v<U, std::string>, std::string, U>>
