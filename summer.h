@@ -46,13 +46,13 @@ namespace summer {
 	class module_base {
 	public:
 		template <typename Singleton>
-		void register_singleton(Singleton& singleton) {
+		void register_singleton(std::shared_ptr<Singleton> singleton) {
 			call_register<Singleton, SingletonTypes...>(singleton);
 		}
 
 	private:
 		template <typename Singleton, typename SingletonTypeArg = void, typename ... SingletonTypeArgs>
-		void call_register(Singleton& singleton) {
+		void call_register(std::shared_ptr<Singleton> singleton) {
 			if constexpr (std::is_base_of_v<SingletonTypeArg, Singleton>) {
 				static_cast<Module*>(this)->register_type(singleton);
 			}
@@ -67,9 +67,9 @@ namespace summer {
 	public:
 
 		template <typename SingletonType>
-		SingletonType* get_singleton(singleton_identifier<SingletonType> const& singl_iden) noexcept {
+		std::shared_ptr<SingletonType> get_singleton(singleton_identifier<SingletonType> const& singl_iden) noexcept {
 			if (auto it = singletons.find(std::make_pair(std::type_index(typeid(SingletonType)), singl_iden.name())); it != singletons.end()) {
-				return static_cast<SingletonType*>(it->second.get());
+				return std::static_pointer_cast<SingletonType>(it->second);
 			}
 
 			return nullptr;
@@ -92,13 +92,13 @@ namespace summer {
 		template <typename ModulePack>
 		friend class context_support;
 
-		std::unordered_map<singleton_key, std::unique_ptr<singleton_base>, key_hasher> singletons;
+		std::unordered_map<singleton_key, std::shared_ptr<singleton_base>, key_hasher> singletons;
 	};
 
 	template <typename ModulePack>
 	class context_support {
 	public:
-		context_support(application_context* context, ModulePack& modules) noexcept : context(context), modules(modules) {}
+		context_support(application_context& context, ModulePack& modules) noexcept : context(context), modules(modules) {}
 
 		template <typename SingletonType, typename ... Params>
 		void register_singleton(singleton_identifier<SingletonType> const& singl_iden, Params const& ... params) noexcept {
@@ -113,12 +113,12 @@ namespace summer {
 					return false;
 				}
 
-				auto[pair, success] = context->singletons.emplace(std::make_pair(std::type_index(typeid(SingletonType)), singl_iden.name()), std::make_unique<SingletonType>(get_param(params)...));
-				auto singleton_ptr = static_cast<SingletonType*>(pair->second.get());
+				auto[pair, success] = context.singletons.emplace(std::make_pair(std::type_index(typeid(SingletonType)), singl_iden.name()), std::make_shared<SingletonType>(get_param(params)...));
+				auto singleton_ptr = std::static_pointer_cast<SingletonType>(pair->second);
 
 				register_to_modules.emplace_back([&, singleton_ptr]() {
 					std::apply([&, singleton_ptr](auto&... modules) {
-						(modules.register_singleton(*singleton_ptr), ...);
+						(modules.register_singleton(singleton_ptr), ...);
 					}, modules);
 				});
 
@@ -166,8 +166,8 @@ namespace summer {
 		}
 
 		void do_post_constructs() noexcept {
-			for (auto it = std::begin(context->singletons); it != std::end(context->singletons); ++it) {
-				it->second->post_construct(*context);
+			for (auto it = std::begin(context.singletons); it != std::end(context.singletons); ++it) {
+				it->second->post_construct(context);
 			}
 		}
 
@@ -187,8 +187,8 @@ namespace summer {
 		}
 
 		template <typename SingletonType>
-		SingletonType& get_param(singleton_identifier<SingletonType> const& singl_iden) noexcept {
-			return *context->get_singleton(singl_iden);
+		std::shared_ptr<SingletonType> get_param(singleton_identifier<SingletonType> const& singl_iden) noexcept {
+			return context.get_singleton(singl_iden);
 		}
 
 		bool prerequisites_ready() noexcept { return true; }
@@ -200,7 +200,7 @@ namespace summer {
 
 		template <typename SingletonType, typename ... ParamTypes>
 		bool prerequisites_ready(singleton_identifier<SingletonType> const& singl_iden, ParamTypes const& ... params) noexcept {
-			if (context->get_singleton(singl_iden) != nullptr) {
+			if (context.get_singleton(singl_iden) != nullptr) {
 				return prerequisites_ready(params...);
 			}
 
@@ -216,7 +216,7 @@ namespace summer {
 
 		template <typename SingletonType, typename ... ParamTypes>
 		void print_missing(int index, singleton_identifier<SingletonType> const& singl_iden, ParamTypes const& ... params) noexcept {
-			if (context->get_singleton(singl_iden) == nullptr) {
+			if (context.get_singleton(singl_iden) == nullptr) {
 				std::cerr << "  - param " << index << " [" << singl_iden.name() << "] missing" << std::endl;
 			}
 
@@ -226,7 +226,7 @@ namespace summer {
 		ModulePack& modules;
 		std::unordered_map<std::string, std::tuple<std::function<bool()>, std::function<void()>>> singleton_instancers;
 		std::vector<std::function<void()>> register_to_modules;
-		application_context* context;
+		application_context& context;
 	};
 
 	template <typename ... Modules>
@@ -255,7 +255,7 @@ namespace summer {
 		}
 
 	private:
-		summer_application() noexcept : context_support(&context, modules) {}
+		summer_application() noexcept : context_support(context, modules) {}
 
 		void initialize(std::vector<std::string>& args) noexcept {
 			summer_app.setup(context_support);

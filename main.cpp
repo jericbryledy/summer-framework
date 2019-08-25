@@ -39,18 +39,18 @@ private:
 
 class sample_singleton : public summer::singleton_base, public summer::modules::web::controller {
 public:
-	sample_singleton(sample_config& config) {
-		std::cout << "sample singleton path: " << config.path() << std::endl;
+	sample_singleton(std::shared_ptr<sample_config> config) {
+		std::cout << "sample singleton path: " << config->path() << std::endl;
 	}
 
 	void post_construct(summer::application_context& context) noexcept override {
-		config_ = context.get_singleton(summer::singleton_identifier<sample_config>());
+		config = context.get_singleton(summer::singleton_identifier<sample_config>());
 
-		std::cout << "i got: " << config_ << std::endl;
+		std::cout << "i got: " << config << std::endl;
 	}
 
 private:
-	sample_config* config_;
+	std::shared_ptr<sample_config> config;
 };
 
 class sample_application : public sample_application_type {

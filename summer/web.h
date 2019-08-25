@@ -16,7 +16,7 @@ namespace summer::modules::web {
 			std::cout << "web module initialize" << std::endl;
 		}
 
-		void register_type(controller& web_controller) {
+		void register_type(std::shared_ptr<controller> web_controller) {
 			std::cout << "web controller registered!" << std::endl;
 		}
 
