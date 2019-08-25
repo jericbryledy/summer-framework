@@ -12,7 +12,7 @@ namespace summer::modules::web {
 	class web_module : public summer::module_base<web_module, controller> {
 	public:
 		template <typename ContextSupport>
-		void initialize(ContextSupport& context, std::vector<std::string>& args) {
+		void initialize(ContextSupport& context, std::vector<std::string> const& args) {
 			std::cout << "web module initialize" << std::endl;
 		}
 

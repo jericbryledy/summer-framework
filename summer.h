@@ -257,7 +257,7 @@ namespace summer {
 	private:
 		summer_application() noexcept : context_support(context, modules) {}
 
-		void initialize(std::vector<std::string>& args) noexcept {
+		void initialize(std::vector<std::string> const& args) noexcept {
 			summer_app.setup(context_support);
 
 			initializeModules(args);
@@ -267,7 +267,7 @@ namespace summer {
 			context_support.register_singletons_to_modules();
 		}
 
-		void initializeModules(std::vector<std::string>& args) noexcept {
+		void initializeModules(std::vector<std::string> const& args) noexcept {
 			std::apply([this, &args](auto&... modules) {
 				(modules.initialize(context_support, args), ...);
 			}, modules);

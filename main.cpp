@@ -9,7 +9,7 @@
 class module_b : public summer::module_base<module_b> {
 public:
 	template <typename ContextSupport>
-	void initialize(ContextSupport& context, std::vector<std::string>& args) {
+	void initialize(ContextSupport& context, std::vector<std::string> const& args) {
 		std::cout << "module b initialize!" << std::endl;
 	}
 };
@@ -17,7 +17,7 @@ public:
 class module_c : public summer::module_base<module_c> {
 public:
 	template <typename ContextSupport>
-	void initialize(ContextSupport& context, std::vector<std::string>& args) {
+	void initialize(ContextSupport& context, std::vector<std::string> const& args) {
 		std::cout << "module c initialize!" << std::endl;
 	}
 };
