@@ -10,6 +10,7 @@
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
+#include <string_view>
 
 namespace summer {
 
@@ -30,16 +31,14 @@ namespace summer {
 	public:
 		singleton_identifier() noexcept : singleton_identifier(typeid(SingletonType).name()) {}
 
-		singleton_identifier(char const* name) noexcept : name_(name) {}
-		singleton_identifier(std::string const& name) noexcept : name_(name) {}
-		singleton_identifier(std::string&& name) noexcept : name_(std::move(name)) {}
+		singleton_identifier(std::string_view name) noexcept : name_(name) {}
 
-		std::string const& name() const noexcept {
+		std::string_view name() const noexcept {
 			return name_;
 		}
 
 	private:
-		std::string name_;
+		std::string_view name_;
 	};
 
 	template <typename Module, typename ... SingletonTypes>
@@ -77,12 +76,12 @@ namespace summer {
 
 	private:
 
-		using singleton_key = std::pair<std::type_index, std::string>;
+		using singleton_key = std::pair<std::type_index, std::string_view>;
 
 		struct key_hasher {
 			std::size_t operator()(singleton_key const& key) const {
 				auto hash0 = std::get<0>(key).hash_code();
-				auto hash1 = std::hash<std::string>{}(std::get<1>(key));
+				auto hash1 = std::hash<std::string_view>{}(std::get<1>(key));
 
 				// formula taken from boost::hash_combine
 				return hash0 ^ (hash1 + 0x9e3779b9 + (hash0 << 6) + (hash0 >> 2));
@@ -138,7 +137,7 @@ namespace summer {
 			return exists(singl_iden.name());
 		}
 
-		bool exists(std::string const& name) {
+		bool exists(std::string_view const name) {
 			return singleton_instancers.find(name) != std::end(singleton_instancers);
 		}
 
@@ -224,7 +223,7 @@ namespace summer {
 		}
 
 		ModulePack& modules;
-		std::unordered_map<std::string, std::tuple<std::function<bool()>, std::function<void()>>> singleton_instancers;
+		std::unordered_map<std::string_view, std::tuple<std::function<bool()>, std::function<void()>>> singleton_instancers;
 		std::vector<std::function<void()>> register_to_modules;
 		application_context& context;
 	};
