@@ -245,7 +245,7 @@ namespace summer {
 		static void run(int argc, char* argv[]) noexcept {
 			summer_application<SummerApplicationType> summer_app;
 
-			auto args = std::vector<std::string>(argc);
+			auto args = std::vector<std::string_view>(argc);
 			for (int i = 0; i < argc; ++i) {
 				args.emplace_back(argv[i]);
 			}
@@ -256,17 +256,17 @@ namespace summer {
 	private:
 		summer_application() noexcept : context_support(context, modules) {}
 
-		void initialize(std::vector<std::string> const& args) noexcept {
+		void initialize(std::vector<std::string_view> const& args) noexcept {
 			summer_app.setup(context_support);
 
-			initializeModules(args);
+			initialize_modules(args);
 
 			context_support.instantiate_singletons();
 			context_support.do_post_constructs();
 			context_support.register_singletons_to_modules();
 		}
 
-		void initializeModules(std::vector<std::string> const& args) noexcept {
+		void initialize_modules(std::vector<std::string_view> const& args) noexcept {
 			std::apply([this, &args](auto&... modules) {
 				(modules.initialize(context_support, args), ...);
 			}, modules);
